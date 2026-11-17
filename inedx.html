@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flexbox – interaktywny symulator</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#64748b;--line:#dbe2ea;--panel:#fff;--bg:#f3f6fb;--accent:#315efb}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
+header{padding:24px clamp(16px,4vw,48px);background:#111c36;color:white}header h1{margin:0 0 6px;font-size:clamp(22px,3vw,32px)}header p{margin:0;color:#c7d2fe}
+main{max-width:1700px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(460px,560px) minmax(0,1fr);gap:18px}
+.panel,.workspace{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 5px 20px #1e293b0a}
+.panel{padding:18px;align-self:start}h2{font-size:17px;margin:0 0 14px}
+.properties-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:2px}
+.prop{padding:8px 0;border-bottom:1px solid #edf1f6;min-width:0}
+.prop-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.prop-title{display:flex;align-items:center;gap:6px;min-width:0}.prop-head label{font-size:13px;font-weight:750}.enabled{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap}
+.help-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 19px;width:19px;height:19px;border:0;border-radius:50%;padding:0;background:#e8eef9;color:#3153a5;font-size:12px;font-weight:800;cursor:pointer}
+.help-btn:hover,.help-btn[aria-pressed="true"]{background:#315efb;color:#fff}
+.help-btn:focus{outline:2px solid #91a9ff;outline-offset:2px}
+.description-panel{margin-top:16px;padding:15px 16px;border:1px solid #cbd7ee;border-left:4px solid var(--accent);border-radius:11px;background:#f7f9ff}
+.description-panel h3{margin:0 0 8px;font-size:16px;color:#1e3a8a}
+.description-panel p{margin:8px 0;font-size:14px;line-height:1.6;color:#334155}
+.description-panel .desc-value{margin-top:12px;padding-top:10px;border-top:1px solid #dbe4f3}
+.description-panel strong{display:block;margin-bottom:3px;color:#172554;font-size:14px}
+.enabled input{accent-color:var(--accent)}
+select,input[type=number]{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:var(--ink);font:inherit}
+select:disabled,input:disabled{opacity:.4}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.control{margin:12px 0}
+.workspace{min-width:0;padding:18px}.topline{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.topline h2{margin:0}button{border:0;border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#e9eef8;color:#23304a}
+.stage-wrap{border:1px dashed #aab7ca;border-radius:12px;padding:10px;background:#f8fafc}
+#stage{width:100%;height:560px;min-height:300px;background-color:#fff;background-image:linear-gradient(#e9eef5 1px,transparent 1px),linear-gradient(90deg,#e9eef5 1px,transparent 1px);background-size:20px 20px;border:2px solid #8293ad;border-radius:8px;padding:12px;overflow:auto}
+.item{min-width:0;border-radius:9px;color:white;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px #0f172a20;font-size:14px;flex:0 0 auto}
+.item:nth-child(6n+1){background:#315efb}.item:nth-child(6n+2){background:#0f9d8a}.item:nth-child(6n+3){background:#8b5cf6}.item:nth-child(6n+4){background:#e07827}.item:nth-child(6n+5){background:#d34d78}.item:nth-child(6n){background:#475569}
+.hint,.axis-note{color:var(--muted);font-size:12px;line-height:1.5;margin:10px 0 0}.pill{background:#eaf0ff;color:#2346c7;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:700}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101a2e;color:#dbeafe;padding:15px;border-radius:10px;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
+@media(max-width:1100px){main{grid-template-columns:1fr}.panel{max-width:none}#stage{height:460px}}@media(max-width:620px){main{padding:10px}.panel,.workspace{padding:13px}.properties-grid{grid-template-columns:1fr}#stage{height:420px}}
+</style>
+</head>
+<body>
+<header><h1>Flexbox – interaktywny symulator</h1><p>Zmieniaj właściwości kontenera, wyłączaj je i obserwuj na żywo układ dowolnej liczby elementów.</p></header>
+<main>
+<aside class="panel">
+<h2>Właściwości kontenera</h2>
+<div id="properties" class="properties-grid"></div>\n<div class="description-panel" id="descriptionPanel" aria-live="polite"><h3 id="descriptionTitle">Opis właściwości</h3><div id="descriptionBody"><p>Kliknij znak ? przy wybranej właściwości, aby przeczytać opis i znaczenie jej wartości.</p></div></div>
+<h2 style="margin-top:20px">Elementy DIV</h2>
+<div class="two">
+<div class="control"><label for="itemWidth">Szerokość DIV (px)</label><input id="itemWidth" type="number" min="30" max="180" value="74"></div>
+<div class="control"><label for="itemHeight">Wysokość DIV (px)</label><input id="itemHeight" type="number" min="30" max="150" value="54"></div>
+</div>
+<div class="control"><label for="count">Liczba elementów</label><input id="count" type="number" min="1" step="1" value="20"></div>
+<div class="two"><button class="secondary" id="reset">Przywróć ustawienia</button><button class="primary" id="copy">Kopiuj CSS</button></div>
+<p class="hint">Najedź na ikonę „?” przy nazwie właściwości (lub ustaw na niej fokus klawiaturą), aby zobaczyć opis właściwości i znaczenie każdej dostępnej wartości. Odznacz „Włącz”, aby usunąć właściwość z CSS.</p>
+</aside>
+<section class="workspace">
+<div class="topline"><h2>Podgląd na żywo</h2><span class="pill" id="countLabel">20 elementów</span></div>
+<div class="stage-wrap"><div id="stage" aria-label="Podgląd kontenera flex"></div></div>
+<p class="axis-note" id="axisNote">Oś główna i poprzeczna zależą od flex-direction.</p>
+<div style="margin-top:16px"><div class="topline"><h2>Wygenerowany CSS</h2><button class="secondary" id="downloadCss">Pobierz CSS</button></div><pre id="code"></pre></div>
+</section>
+</main>
+<script>
+const defs=[
+{id:'display',css:'display',label:'display',value:'flex',type:'select',options:['flex','inline-flex'],desc:"Włącza układ Flexbox dla bezpośrednich dzieci kontenera.\n\nflex\nKontener blokowy. Zajmuje dostępne miejsce w swoim rodzicu.\n\ninline-flex\nKontener zachowuje się jak element liniowy i zajmuje tylko miejsce potrzebne na zawartość."},
+{id:'direction',css:'flex-direction',label:'flex-direction',value:'row',type:'select',options:['row','row-reverse','column','column-reverse'],desc:"Ustala kierunek osi głównej, wzdłuż której układane są elementy.\n\nrow\nOd lewej do prawej. Oś główna jest pozioma.\n\nrow-reverse\nOd prawej do lewej.\n\ncolumn\nOd góry do dołu. Oś główna jest pionowa.\n\ncolumn-reverse\nOd dołu do góry.\n\nOś poprzeczna zawsze jest prostopadła do osi głównej."},
+{id:'wrap',css:'flex-wrap',label:'flex-wrap',value:'nowrap',type:'select',options:['nowrap','wrap','wrap-reverse'],desc:"Określa, czy elementy mogą przechodzić do kolejnych linii.\n\nnowrap\nWszystkie elementy pozostają w jednym wierszu lub kolumnie. Mogą wyjść poza obszar kontenera.\n\nwrap\nElementy przechodzą do kolejnych linii, gdy brakuje miejsca.\n\nwrap-reverse\nElementy przechodzą do kolejnych linii, ale kolejność linii jest odwrócona na osi poprzecznej."},
+{id:'justify',css:'justify-content',label:'justify-content',value:'flex-start',type:'select',options:['flex-start','flex-end','center','space-between','space-around','space-evenly'],desc:"Rozmieszcza elementy wzdłuż osi głównej.\n\nflex-start\nElementy przy początku osi głównej.\n\nflex-end\nElementy przy końcu osi głównej.\n\ncenter\nElementy zgrupowane na środku.\n\nspace-between\nPierwszy i ostatni element przy krawędziach, równe odstępy pomiędzy elementami.\n\nspace-around\nRówna przestrzeń wokół każdego elementu. Przy krawędziach jest jej połowa.\n\nspace-evenly\nRówne odstępy pomiędzy elementami oraz przy obu krawędziach."},
+{id:'alignItems',css:'align-items',label:'align-items',value:'stretch',type:'select',options:['stretch','flex-start','flex-end','center','baseline'],desc:"Wyrównuje elementy wzdłuż osi poprzecznej.\n\nstretch\nRozciąga elementy, aby wypełniły dostępną przestrzeń, jeśli ich rozmiar w tym kierunku jest automatyczny.\n\nflex-start\nWyrównuje elementy do początku osi poprzecznej.\n\nflex-end\nWyrównuje elementy do końca osi poprzecznej.\n\ncenter\nUstawia elementy na środku osi poprzecznej.\n\nbaseline\nWyrównuje teksty elementów według wspólnej linii bazowej pisma."},
+{id:'alignContent',css:'align-content',label:'align-content',value:'stretch',type:'select',options:['stretch','flex-start','flex-end','center','space-between','space-around','space-evenly'],desc:"Rozmieszcza całe linie elementów wzdłuż osi poprzecznej. Przydatne, gdy elementy tworzą kilka linii, np. przy flex-wrap: wrap.\n\nstretch\nLinie rozciągają się, aby wypełnić wolne miejsce.\n\nflex-start\nWszystkie linie przy początku osi poprzecznej.\n\nflex-end\nWszystkie linie przy końcu osi poprzecznej.\n\ncenter\nWszystkie linie zgrupowane na środku.\n\nspace-between\nRówne odstępy między liniami, bez odstępu przy krawędziach.\n\nspace-around\nPrzestrzeń wokół każdej linii. Przy krawędziach jest jej połowa.\n\nspace-evenly\nRówne odstępy między liniami oraz przy obu krawędziach."},
+{id:'gap',css:'gap',label:'gap',value:8,type:'range',min:0,max:40,desc:"Ustawia odstęp pomiędzy sąsiednimi elementami. Wartość jest podawana w pikselach.\n\n0 px\nBrak dodatkowego odstępu.\n\nWiększa wartość\nWiększa przerwa pomiędzy elementami. Właściwość ustawia jednakowy odstęp w obu kierunkach."},
+{id:'height',css:'height',label:'height',value:560,type:'number',min:200,max:1000,desc:"Ustawia wysokość kontenera w pikselach.\n\nMniejsza wartość\nMniej wolnego miejsca w kontenerze.\n\nWiększa wartość\nWięcej wolnego miejsca. Ułatwia obserwowanie działania align-items oraz align-content.\n\nZakres suwaka pola: od 200 do 1000 px."}
+];
+const $=id=>document.getElementById(id), stage=$('stage');
+const enabled=Object.fromEntries(defs.map(d=>[d.id,true]));
+function showDescription(id){
+ const d=defs.find(item=>item.id===id);
+ $('descriptionTitle').textContent=d.label+' : opis i dostępne wartości';
+ const body=$('descriptionBody');body.innerHTML='';
+ d.desc.split('\\n\\n').forEach((part,index)=>{
+  const lines=part.split('\\n');
+  const section=document.createElement('div');
+  if(index===0){
+   const p=document.createElement('p');p.textContent=part;section.append(p);
+  }else{
+   section.className='desc-value';
+   const strong=document.createElement('strong');strong.textContent=lines[0];
+   const p=document.createElement('p');p.textContent=lines.slice(1).join(' ');
+   section.append(strong,p);
+  }
+  body.append(section);
+ });
+ document.querySelectorAll('.help-btn').forEach(btn=>btn.setAttribute('aria-pressed','false'));
+ const active=$(id).closest('.prop').querySelector('.help-btn');
+ if(active)active.setAttribute('aria-pressed','true');
+}
+function buildControls(){
+ const root=$('properties');
+ defs.forEach(d=>{
+  const wrap=document.createElement('div');wrap.className='prop';
+  const head=document.createElement('div');head.className='prop-head';
+  const title=document.createElement('div');title.className='prop-title';
+  const label=document.createElement('label');label.htmlFor=d.id;label.textContent=d.label;
+  const help=document.createElement('button');help.type='button';help.className='help-btn';help.textContent='?';
+  help.setAttribute('aria-label','Pokaż opis właściwości '+d.label);help.setAttribute('aria-pressed','false');
+  help.addEventListener('click',()=>showDescription(d.id));
+  title.append(label,help);
+  const toggle=document.createElement('label');toggle.className='enabled';
+  const check=document.createElement('input');check.type='checkbox';check.checked=true;check.setAttribute('aria-label','Włącz właściwość '+d.label);
+  check.addEventListener('change',()=>{enabled[d.id]=check.checked;$(d.id).disabled=!check.checked;update()});
+  toggle.append(check,document.createTextNode(' Włącz'));
+  head.append(title,toggle);wrap.append(head);
+  let input;
+  if(d.type==='select'){
+   input=document.createElement('select');
+   d.options.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;input.append(o)});
+  }else{input=document.createElement('input');input.type=d.type;if(d.type==='range'){input.min=d.min;input.max=d.max}else{input.min=d.min;input.max=d.max}}
+  input.id=d.id;input.value=d.value;input.addEventListener('input',update);
+  wrap.append(input);
+  root.append(wrap);
+ });
+}
+function update(){
+ const vals=Object.fromEntries(defs.map(d=>[d.id,$(d.id).value]));
+ const n=Math.max(1,Math.floor(Number($('count').value)||20));
+ stage.innerHTML='';
+ for(let i=1;i<=n;i++){const el=document.createElement('div');el.className='item';el.textContent=i;el.style.width=$('itemWidth').value+'px';el.style.height=$('itemHeight').value+'px';el.style.flexBasis=$('itemWidth').value+'px';stage.append(el)}
+ const cssProps={'display':'display','direction':'flexDirection','wrap':'flexWrap','justify':'justifyContent','alignItems':'alignItems','alignContent':'alignContent','gap':'gap','height':'height'};
+ defs.forEach(d=>{stage.style[cssProps[d.id]]=enabled[d.id]?(d.id==='gap'||d.id==='height'?vals[d.id]+'px':vals[d.id]):''});
+ $('countLabel').textContent=n+' elementów';
+ const dir=enabled.direction?vals.direction:'row (domyślnie)';
+ const vertical=dir.startsWith('column');
+ $('axisNote').textContent=`flex-direction: ${dir}. Oś główna: ${vertical?'pionowa':'pozioma'}; oś poprzeczna: ${vertical?'pozioma':'pionowa'}. Gdy flex-direction jest wyłączone, domyślnie obowiązuje row.`;
+ let lines=['.container {'];
+ defs.forEach(d=>{if(enabled[d.id])lines.push(`  ${d.css}: ${d.id==='gap'||d.id==='height'?vals[d.id]+'px':vals[d.id]};`)});
+ lines.push('}');$('code').textContent=lines.join('\n');
+}
+['itemWidth','itemHeight','count'].forEach(id=>$(id).addEventListener('input',update));
+$('reset').addEventListener('click',()=>{defs.forEach(d=>{$(d.id).value=d.value;enabled[d.id]=true;$(d.id).disabled=false;$(d.id).closest('.prop').querySelector('input[type=checkbox]').checked=true});$('itemWidth').value=74;$('itemHeight').value=54;$('count').value=20;update()});
+$('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('code').textContent);$('copy').textContent='Skopiowano!';setTimeout(()=>$('copy').textContent='Kopiuj CSS',1400)}catch(e){$('copy').textContent='Zaznacz kod ręcznie'}});
+$('downloadCss').addEventListener('click',()=>{const blob=new Blob([$('code').textContent],{type:'text/css'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='flexbox-ustawienia.css';a.click();URL.revokeObjectURL(a.href)});
+buildControls();update();
+</script>
+</body></html>
